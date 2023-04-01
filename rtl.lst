@@ -1,0 +1,9 @@
+$SHARECODE_ROOT/AHB_Lite_Matrix/rtl/ahb_lite_matrix.v
+$SHARECODE_ROOT/AHB_Lite_Matrix/rtl/decoder.v
+$SHARECODE_ROOT/AHB_Lite_Matrix/rtl/m2s_mux.v
+$SHARECODE_ROOT/AHB_Lite_Matrix/rtl/s2m_mux.v
+$SHARECODE_ROOT/AHB_Lite_Matrix/rtl/arb/cm_arb_dp.v
+$SHARECODE_ROOT/AHB_Lite_Matrix/rtl/arb/cm_arb_mp.v
+$SHARECODE_ROOT/AHB_Lite_Matrix/rtl/arb/cm_arb_pr.v
+$SHARECODE_ROOT/AHB_Lite_Matrix/rtl/arb/cm_arb_req_pri.v
+$SHARECODE_ROOT/AHB_Lite_Matrix/rtl/arb/cm_arb_rr.v

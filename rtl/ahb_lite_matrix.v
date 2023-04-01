@@ -118,6 +118,11 @@ module ahb_lite_matrix(
 
 wire HREADY,HRESP;
 
+reg occupied,nxt_occupied;
+reg [3:0] control,nxt_control;
+wire control_continue;
+wire arb_ready;
+
 reg [1:0] Master_Sel_A,Master_Sel_D;
 wire [3:0] Mst_req;
 wire [3:0] Mst_grant,Mst_last_grant;
@@ -131,24 +136,84 @@ assign Mst_req[1] = |M1_HTRANS;
 assign Mst_req[2] = |M2_HTRANS;
 assign Mst_req[3] = |M3_HTRANS;
 
+assign control_continue = |(control & Mst_req);
+assign arb_ready = (occupied == 1'b0) | ((occupied == 1'b1) & (control_continue == 1'b0));
+
 always @* begin
-    case(Mst_grant)
-        4'b0001: Master_Sel_A = 2'b00;
-        4'b0001: Master_Sel_A = 2'b01;
-        4'b0001: Master_Sel_A = 2'b10;
-        4'b0001: Master_Sel_A = 2'b11;
-        default: Master_Sel_A = 2'b00;
-    endcase
+    if(arb_ready == 1'b1)begin
+        case(Mst_grant)
+            4'b0001: Master_Sel_A = 2'b00;
+            4'b0010: Master_Sel_A = 2'b01;
+            4'b0100: Master_Sel_A = 2'b10;
+            4'b1000: Master_Sel_A = 2'b11;
+            default: Master_Sel_A = 2'b00;
+        endcase
+    end
+    else begin
+        case(control)
+            4'b0001: Master_Sel_A = 2'b00;
+            4'b0010: Master_Sel_A = 2'b01;
+            4'b0100: Master_Sel_A = 2'b10;
+            4'b1000: Master_Sel_A = 2'b11;
+            default: Master_Sel_A = 2'b00;
+        endcase
+    end
+end
+
+always @(posedge HCLK or negedge HRESETn) begin
+    if(HRESETn == 1'b0)begin
+        occupied <= 1'b0;
+    end
+    else begin
+        occupied <= nxt_occupied;
+    end
 end
 
 always @* begin
-    case(Mst_last_grant)
-        4'b0001: Master_Sel_D = 2'b00;
-        4'b0001: Master_Sel_D = 2'b01;
-        4'b0001: Master_Sel_D = 2'b10;
-        4'b0001: Master_Sel_D = 2'b11;
-        default: Master_Sel_D = 2'b00;
-    endcase
+    if(arb_ready == 1'b1)begin
+        if((|Mst_req) == 1'b1)begin
+            nxt_occupied = 1'b1;
+        end
+        else begin
+            nxt_occupied = 1'b0;
+        end
+    end
+    else begin
+        nxt_occupied = 1'b1;
+    end
+end
+
+always @(posedge HCLK or negedge HRESETn) begin
+    if(HRESETn == 1'b0)begin
+        control <= 4'b0000;
+    end
+    else begin
+        control <= nxt_control;
+    end
+end
+
+always @* begin
+    if(arb_ready == 1'b1)begin
+        if((|Mst_req) == 1'b1)begin
+            nxt_control = Mst_grant;
+        end
+        else begin
+            nxt_control = 4'b0;
+        end
+    end
+    else begin
+        nxt_control = 4'b0;
+    end
+end
+
+always @(posedge HCLK or negedge HRESETn) begin
+    if(HRESETn == 1'b0)begin
+        Master_Sel_D <= 2'b00;
+    end
+    else begin
+        if(HREADY == 1'b1)
+            Master_Sel_D <= Master_Sel_A;
+    end
 end
 
 always @* begin
@@ -164,22 +229,22 @@ always @* begin
     endcase
 end
 
-assign HREADY_MST = HREADY & (Mst_grant | Mst_last_grant);
+assign HREADY_MST = HREADY ? (Mst_grant | Mst_last_grant) : 4'b0;
 assign M0_HREADY  = HREADY_MST[0];
 assign M1_HREADY  = HREADY_MST[1];
 assign M2_HREADY  = HREADY_MST[2];
 assign M3_HREADY  = HREADY_MST[3];
 
 CM_ARB_DP#(
-    REQ_NUM                   (4),
-    PRI_WIDTH                 (2)
+    .REQ_NUM                   (4),
+    .PRI_WIDTH                 (2)
     ) U_arbiter
     (
     .clk        (HCLK),
     .rst_n      (HRESETn),
     .req        (Mst_req),
     .pri        (Mst_pri),
-    .ready      (HREADY),
+    .ready      (arb_ready),
     .gnt        (Mst_grant),
     .last_gnt   (Mst_last_grant)
     );
