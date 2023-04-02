@@ -164,26 +164,30 @@ task m0_test(input [31:0] addr);
     bit [31:0] rdata;
     m0_ahb_w(addr,addr);
     m0_ahb_r(addr,rdata);
-    $display("%H",rdata);
+    $display("%t:Request from Master 0:",$time());
+    $display("%t:Write and read data %H",$time(),rdata);
 endtask
 
 task m1_test(input [31:0] addr);
     bit [31:0] rdata;
     m1_ahb_w(addr,addr);
     m1_ahb_r(addr,rdata);
-    $display("%H",rdata);
+    $display("%t:Request from Master 1:",$time());
+    $display("%t:Write and read data %H",$time(),rdata);
 endtask
 
 task m2_test(input [31:0] addr);
     bit [31:0] rdata;
     m2_ahb_w(addr,addr);
     m2_ahb_r(addr,rdata);
-    $display("%H",rdata);
+    $display("%t:Request from Master 2:",$time());
+    $display("%t:Write and read data %H",$time(),rdata);
 endtask
 
 task m3_test(input [31:0] addr);
     bit [31:0] rdata;
     m3_ahb_w(addr,addr);
     m3_ahb_r(addr,rdata);
-    $display("%H",rdata);
+    $display("%t:Request from Master 3:",$time());
+    $display("%t:Write and read data %H",$time(),rdata);
 endtask
